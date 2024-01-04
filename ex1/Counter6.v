@@ -1,19 +1,28 @@
+// 定义Counter6模块，具有输入CP、CLR_、U，和输出Q、CO、BO
+module Counter6 (CP, CLR_, U, Q, CO, BO);
+    input CP, CLR_, U;  // 输入信号：CP（时钟脉冲），CLR_（异步清零），U（计数方向控制）
+    output reg [2:0] Q; // 3位输出寄存器Q，用于存储当前计数值
+    output CO, BO;      // 输出信号：CO（上溢出），BO（下溢出）
 
-module Counter6 (CP,CLR_,U,Q,CO,BO);
-    input CP, CLR_, U;  
-    output reg [2:0] Q; //Data output
-    output CO,BO;
-    
+    // CO信号赋值，当U为1（上数）且Q等于5时，CO为1（上溢出指示）
     assign CO = U & (Q == 3'd5);
-    assign BO = ~U & (Q == 3'd0) & (CLR_== 1'b1);
-    
+
+    // BO信号赋值，当U为0（下数）、Q为0且CLR_为1时，BO为1（下溢出指示）
+    assign BO = ~U & (Q == 3'd0) & (CLR_ == 1'b1);
+
+    // 始终块，响应时钟上升沿或CLR_下降沿
     always @ (posedge CP or negedge CLR_)
       if (~CLR_) 
-          Q <= 3'b000;            //asynchronous clear
-      else if (U==1)              //U=1,Up Counter
-          Q <= (Q + 1'b1)%6; 
-      else  if (Q == 3'b000)
-          Q <= 3'd5; 
-      else                        //U=0,Down Counter
-          Q <= (Q - 1'b1)%6;
+          Q <= 3'b000;            // 当CLR_为0时，异步清零计数器
+      else if (U == 1)            // 当U为1时，进行上数操作
+          Q <= (Q + 1'b1) % 6;    // 计数器加1，到达6时回绕到0
+      else if (Q == 3'b000)
+          Q <= 3'd5;              // 在下数模式下，如果Q为0，则设置为5（实现回绕）
+      else                        // 当U为0时，进行下数操作
+          Q <= (Q - 1'b1) % 6;    // 计数器减1，到达-1时回绕到5
 endmodule
+// 此模块实现了一个具有上溢出和下溢出指示的6计数器。
+// U输入用于控制计数器是上数还是下数。
+// 当CLR_信号被拉低时，计数器会异步清零。
+// 上溢出和下溢出指示（CO和BO）提供了关于计数器状态的额外信息，特别是在达到计数器的最大或最小值时。
+// 计数器通过取模运算%6实现循环计数，即在达到6或-1时回绕。
